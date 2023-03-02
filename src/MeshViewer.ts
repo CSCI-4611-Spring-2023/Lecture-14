@@ -111,7 +111,8 @@ export class MeshViewer extends gfx.GfxApp
         for(let i=0; i < normals.length; i++)
             morphNormals.push(normals[i].clone());
 
-        this.generateHillOrValley(morphVertices);
+        for(let i=0; i < 100; i++)
+            this.generateHillOrValley(morphVertices);
 
         this.terrain.setMorphTargetVertices(morphVertices);
         this.terrain.setMorphTargetNormals(morphNormals);
@@ -119,10 +120,10 @@ export class MeshViewer extends gfx.GfxApp
 
     private generateHillOrValley(vertices: gfx.Vector3[]): void
     {
-        const centerIndex = 250;
+        const centerIndex = Math.floor(Math.random() * (vertices.length-1));
         const centerPosition = vertices[centerIndex].clone();
-        const radius = 50;
-        const height = 50;
+        const radius = Math.random() * 50 + 20;
+        const height = Math.random() * 50 - 25;
 
         for(let i=0; i < vertices.length; i++)
         {
