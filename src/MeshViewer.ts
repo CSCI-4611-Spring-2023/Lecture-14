@@ -57,6 +57,9 @@ export class MeshViewer extends gfx.GfxApp
          const gui = new GUI();
          gui.width = 200;
 
+        const morphController = gui.add(this.terrain, 'morphAlpha', 0, 1);
+        morphController.name('Alpha');
+
         const wireframeController = gui.add(this.terrain.material, 'wireframe');
         wireframeController.name('Wireframe');
     }
@@ -99,6 +102,22 @@ export class MeshViewer extends gfx.GfxApp
         this.terrain.setNormals(normals);
         this.terrain.setIndices(indices);
         this.terrain.createDefaultVertexColors();
+
+        const morphVertices: gfx.Vector3[] = [];
+        for(let i=0; i < vertices.length; i++)
+            morphVertices.push(vertices[i].clone());
+
+        const morphNormals: gfx.Vector3[] = [];
+        for(let i=0; i < normals.length; i++)
+            morphNormals.push(normals[i].clone());
+
+        this.terrain.setMorphTargetVertices(morphVertices);
+        this.terrain.setMorphTargetNormals(morphNormals);
+    }
+
+    private generateHillOrValley(): void
+    {
+
     }
 
     update(deltaTime: number): void 
