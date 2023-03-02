@@ -111,13 +111,24 @@ export class MeshViewer extends gfx.GfxApp
         for(let i=0; i < normals.length; i++)
             morphNormals.push(normals[i].clone());
 
+        this.generateHillOrValley(morphVertices);
+
         this.terrain.setMorphTargetVertices(morphVertices);
         this.terrain.setMorphTargetNormals(morphNormals);
     }
 
-    private generateHillOrValley(): void
+    private generateHillOrValley(vertices: gfx.Vector3[]): void
     {
+        const centerIndex = 250;
+        const centerPosition = vertices[centerIndex].clone();
+        const radius = 50;
+        const height = 50;
 
+        for(let i=0; i < vertices.length; i++)
+        {
+            const distanceFactor = centerPosition.distanceTo(vertices[i]) / radius;
+            vertices[i].y += (1 / Math.exp(distanceFactor*distanceFactor)) * height;
+        }
     }
 
     update(deltaTime: number): void 
