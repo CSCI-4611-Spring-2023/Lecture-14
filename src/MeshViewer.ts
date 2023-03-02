@@ -5,6 +5,7 @@
  */ 
 
 import * as gfx from 'gophergfx'
+import { GUI } from 'dat.gui'
 
 export class MeshViewer extends gfx.GfxApp
 {
@@ -49,8 +50,15 @@ export class MeshViewer extends gfx.GfxApp
         this.axes.position.set(0, 0.1, 0);
         this.scene.add(this.axes);
 
-        this.generateTerrain(300, 200, 4, 3);
+        this.generateTerrain(300, 200, 30, 20);
         this.scene.add(this.terrain);
+
+         // Create a simple GUI
+         const gui = new GUI();
+         gui.width = 200;
+
+        const wireframeController = gui.add(this.terrain.material, 'wireframe');
+        wireframeController.name('Wireframe');
     }
 
     private generateTerrain(width: number, depth: number, cols: number, rows: number): void
@@ -64,7 +72,10 @@ export class MeshViewer extends gfx.GfxApp
         {
             for(let c=0; c < cols; c++)
             {
-                vertices.push(new gfx.Vector3(r, 0, c));
+                const x = c / (cols-1) * width;
+                const z = r / (rows-1) * depth;
+
+                vertices.push(new gfx.Vector3(x - width/2, 0, z - depth/2));
                 normals.push(new gfx.Vector3(0, 1, 0));
             }
         }
@@ -74,10 +85,13 @@ export class MeshViewer extends gfx.GfxApp
         {
             for(let c=0; c < cols-1; c++)
             {
-                const upperLeftIndex = 0;
-                const upperRightIndex = 0;
-                const lowerLeftIndex = 0;
-                const lowerRightIndex = 0;
+                const upperLeftIndex = cols * r + c;
+                const upperRightIndex = upperLeftIndex + 1;
+                const lowerLeftIndex = upperLeftIndex + cols;
+                const lowerRightIndex = lowerLeftIndex + 1;
+
+                indices.push(upperLeftIndex, lowerLeftIndex, upperRightIndex);
+                indices.push(upperRightIndex, lowerLeftIndex, lowerRightIndex);
             }
         }
 
