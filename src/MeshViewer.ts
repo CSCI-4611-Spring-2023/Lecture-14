@@ -50,7 +50,8 @@ export class MeshViewer extends gfx.GfxApp
         this.axes.position.set(0, 0.1, 0);
         this.scene.add(this.axes);
 
-        this.generateTerrain(300, 200, 30, 20);
+        this.terrain.material.texture = new gfx.Texture('./assets/sand.jpg');
+        this.generateTerrain(300, 200, 30, 20, 5);
         this.scene.add(this.terrain);
 
          // Create a simple GUI
@@ -64,11 +65,12 @@ export class MeshViewer extends gfx.GfxApp
         wireframeController.name('Wireframe');
     }
 
-    private generateTerrain(width: number, depth: number, cols: number, rows: number): void
+    private generateTerrain(width: number, depth: number, cols: number, rows: number, textureTiling: number): void
     {
         const vertices: gfx.Vector3[] = [];
         const normals: gfx.Vector3[] = [];
         const indices: number[] = [];
+        const uvs: number[] = [];
 
         // Compute vertices and normals
         for(let r=0; r < rows; r++)
@@ -80,6 +82,7 @@ export class MeshViewer extends gfx.GfxApp
 
                 vertices.push(new gfx.Vector3(x - width/2, 0, z - depth/2));
                 normals.push(new gfx.Vector3(0, 1, 0));
+                uvs.push(textureTiling * x / width, textureTiling * z / depth);
             }
         }
 
@@ -101,18 +104,17 @@ export class MeshViewer extends gfx.GfxApp
         this.terrain.setVertices(vertices);
         this.terrain.setNormals(normals);
         this.terrain.setIndices(indices);
+        this.terrain.setTextureCoordinates(uvs);
         this.terrain.createDefaultVertexColors();
 
         const morphVertices: gfx.Vector3[] = [];
         for(let i=0; i < vertices.length; i++)
             morphVertices.push(vertices[i].clone());
 
-        const morphNormals: gfx.Vector3[] = [];
-        for(let i=0; i < normals.length; i++)
-            morphNormals.push(normals[i].clone());
-
         for(let i=0; i < 100; i++)
             this.generateHillOrValley(morphVertices);
+
+        const morphNormals = this.computeVertexNormals(morphVertices, indices);
 
         this.terrain.setMorphTargetVertices(morphVertices);
         this.terrain.setMorphTargetNormals(morphNormals);
@@ -135,5 +137,49 @@ export class MeshViewer extends gfx.GfxApp
     update(deltaTime: number): void 
     {
         this.cameraControls.update(deltaTime);
+    }
+
+    private computeVertexNormals(vertices: gfx.Vector3[], indices: number[]): gfx.Vector3[]
+    {
+        // Initialize the vertex normals to zero
+        const vertexNormals: gfx.Vector3[] = [];
+        const vertexTriangleCount: number[] = [];
+        for(let i=0; i < vertices.length; i++)
+        {
+            vertexNormals.push(new gfx.Vector3(0, 0, 0));
+            vertexTriangleCount.push(0);
+        }
+
+        // Compute the normal for each triangle and add it to each vertex normal
+        for(let i=0; i < indices.length; i+=3)
+        {
+            const v1 = vertices[indices[i]];
+            const v2 = vertices[indices[i+1]];
+            const v3 = vertices[indices[i+2]];
+
+            const n1 = gfx.Vector3.subtract(v2, v1);
+            const n2 = gfx.Vector3.subtract(v3, v1);
+
+            n1.normalize();
+            n2.normalize();
+
+            const triangleNormal = gfx.Vector3.cross(n1, n2);
+
+            vertexNormals[indices[i]].add(triangleNormal);
+            vertexNormals[indices[i+1]].add(triangleNormal);
+            vertexNormals[indices[i+2]].add(triangleNormal);
+
+            vertexTriangleCount[indices[i]]++;
+            vertexTriangleCount[indices[i+1]]++;
+            vertexTriangleCount[indices[i+2]]++;
+        }
+
+        // Divide each vertex normal by the number of triangles to compute the average
+        for(let i=0; i < vertexNormals.length; i++)
+        {
+            vertexNormals[i].multiplyScalar(1/vertexTriangleCount[i]);
+        }
+        
+        return vertexNormals;
     }
 }
